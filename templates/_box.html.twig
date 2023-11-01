@@ -1,0 +1,226 @@
+{#-
+	************
+	Box skeleton
+	************
+
+	An extendable HTML skeleton for frequently used component structure - component wrapper, its title and content.
+	Designed for easy extension/inclusion of components, modification of their HTML wrappers,
+	handling of CSS BEM classes and preventing the rendering of empty components.
+	The skeleton behavior is controlled by the "box" variable and its properties.
+
+	Structure:
+	----------
+	└── box
+		└── title
+		└── content
+
+	Properties:
+	-----------
+	└── Defining content:
+	- "title" (string) - Box title (for a more complex value, extend the "box_title" block {% block box_title %}...{% endblock %}).
+	- "content" (string) - Box content (for a more complex value, extend the "box_content" block {% block box_content %}...{% endblock %}).
+
+	└── Skeleton settings:
+	- "require_content" (bool) - If true and the box content is empty, the box will not be rendered (even though it has a title).
+	- "render_skeleton" (bool) - if true, renders only box content (no title and no HTML wrappers).
+
+	└── HTML code settings:
+	- "tag_box" (string) - HTML box wrapper tag.
+	- "tag_title" (string) - HTML title wrapper tag.
+	- "tag_content" (string) - HTML content wrapper tag.
+	- "bem_root" (string) - The box wrapper is considered a BEM block, the rest of box elements are considered BEM elements.
+		If "bem_root" is not empty, the box wrapper is assigned the CSS class "[bem_root]",
+		the rest elemets "[bem_root]__[bem_[element_name]_suffix]" ("element_name" - see "Structure" section).
+		Inside the box, the property "box.bem_root" is also available under the "shortcut" variable "r"
+		(variable name is adjustable by the "bem_root_var" property).
+	- "bem_root_var" (string) - (see "bem_root")
+	- "bem_title_suffix" (string) - (see "bem_root")
+	- "bem_content_suffix" (string) - (see "bem_root")
+	- "[element_name]_[html_attribute]" (bool|string) - The given HTML attribute of the box element (e.g. box_class).
+		If the attribute value:
+		- is "false|null", it will not be rendered,
+		- is "true", only attribute name will be rendered,
+		- contains twig output ("lorem-{{ foo }}"), it will be evaluated.
+	- "[element_name]_![html_attribute]" (bool|string) - Same as "[element_name]_[html_attribute]".
+		String values with and without "!" are not overwritten but concatenated.
+
+	Example:
+	--------
+
+		Twig (e.g. _card.html.twig):
+		----------------------------
+		{% extends '_box.html.twig' %}
+
+		{% set box = {
+			'bem_root': 'Card',
+			'title': 'Card heading',
+			'title_class': 'text-primary text-truncate',
+		}|merge(box ?? {}) %}
+
+		{% block box_content %}
+			<p class="{{ r }}__text">Card content lorem ipsum</p>
+			<img class="{{ r }}__img" src="img.svg">
+		{% endblock %}
+
+		HTML result:
+		------------
+		<div class="Card">
+			<h2 class="Card__title text-primary text-truncate">Card heading</h2>
+			<div class="Card__content">
+				<p class="Card__text">Card content lorem ipsum</p>
+				<img class="Card__img" src="img.svg">
+			/div>
+		</div>
+
+		Possible use/modification of Card component:
+		--------------------------------------------
+		{{ include(_card.html.twig) }}
+
+		{{ include(_card.html.twig, { 'box': {
+			'box_class': 'Card--inverse',
+		} }) }}
+
+		{{ include(_card.html.twig, { 'box': {
+			'bem_root': 'Card-2',
+			'title' 'Card two heading',
+		} }) }}
+-#}
+
+{%- set box = {
+	'title': '',
+	'content': '',
+
+	'require_content': true,
+	'render_skeleton': true,
+
+	'tag_box': 'div',
+	'tag_title': 'h2',
+	'tag_content': 'div',
+	'bem_root': null,
+	'bem_root_var': 'r',
+	'bem_title_suffix': '__title',
+	'bem_content_suffix': '__content',
+}|merge(box ?? {}) -%}
+
+{#- Wrap -#}
+{%- block box_scope -%}
+{%- with { (box.bem_root_var): box.bem_root } -%} {#- = Shortcut for "box.bem_root" -#}
+
+	{#- = BEM classes based on "bem_xxx" properties -#}
+	{%- if box.bem_root -%}
+		{%- set box = box|merge({
+			'box_class': (box.bem_root ~ ' ' ~ (box.box_class ?? ''))|trim,
+			'title_class': ((box.bem_root ~ box.bem_title_suffix) ~ ' ' ~ (box.title_class ?? ''))|trim,
+			'content_class': ((box.bem_root ~ box.bem_content_suffix) ~ ' ' ~ (box.content_class ?? ''))|trim,
+		}) -%}
+	{%- endif -%}
+
+	{#- Box wrap -#}
+	{%- block box_outer -%}
+		{%- set _has_title = box.title|trim or (block('box_title') is defined and block('box_title')|trim is not empty) -%}
+		{%- set _has_content = box.content|trim or (block('box_content') is defined and block('box_content')|trim is not empty) -%}
+		{%- if (_has_content or not box.require_content) and (_has_title or _has_content) -%}
+			{%- if box.render_skeleton -%}
+				<{{ box.tag_box -}}
+
+					{#- Attributes -#}
+					{%- block box_attrs -%}
+						{%- set attr_source = attr_source ?? box -%}
+						{%- set attr_prefix = attr_prefix ?? 'box_' -%}
+
+						{#- = Get and concat "core" and "normal" HTML attributes -#}
+						{%- set attrs = {} -%}
+						{%- for attr, val in attr_source -%}
+							{%- if
+								attr starts with attr_prefix
+								and val is not same as(false)
+								and val is not same as(null)
+							-%}
+								{%- set attr = attr[attr_prefix|length:] -%}
+								{%- set is_core = attr starts with '!' -%}
+								{%- set attr = attr|trim('!', 'left') -%}
+								{%- set attrs = attrs|merge({
+									(attr): val is iterable
+										? ((is_core ? val) ~ ' ' ~ (attrs[attr] ?? '') ~ ' ' ~ (not is_core ? val))|trim
+										: val,
+								}) -%}
+							{%- endif -%}
+						{%- endfor -%}
+
+						{#- Render attributes -#}
+						{%- for attr, val in attrs -%}
+
+							{#- Attribute -#}
+							{%- block box_attr -%}
+								{{- ' ' ~ attr }}
+								{%- if val is not same as(true) -%}
+									="
+
+									{#- Attribute value -#}
+									{%- block box_attr_val ('{{' in val ? include(template_from_string(val)) : val)|e('html_attr') -%}
+
+									"
+								{%- endif -%}
+							{%- endblock -%}
+
+						{%- endfor -%}
+					{%- endblock -%}
+
+				>
+			{%- endif -%}
+
+				{#- Box -#}
+				{%- block box -%}
+
+					{#- Title wrap -#}
+					{%- block box_title_outer -%}
+						{%- if _has_title and box.render_skeleton -%}
+							<{{ box.tag_title -}}
+
+								{#- Attributes -#}
+								{%- with { 'attr_prefix': 'title_' } -%}
+									{{- block('box_attrs') -}}
+								{%- endwith -%}
+
+							>
+
+								{#- Title -#}
+								{%- block box_title box.title|raw -%}
+
+							</{{ box.tag_title }}>
+						{%- endif -%}
+					{%- endblock -%}
+
+					{#- Content wrap -#}
+					{%- block box_content_outer -%}
+						{%- if _has_content -%}
+							{%- if box.render_skeleton -%}
+								<{{ box.tag_content -}}
+
+									{#- Attributes -#}
+									{%- with { 'attr_prefix': 'content_' } -%}
+										{{- block('box_attrs') -}}
+									{%- endwith -%}
+
+								>
+							{%- endif -%}
+
+							{#- Content -#}
+							{%- block box_content box.content|raw -%}
+
+							{%- if box.render_skeleton -%}
+								</{{ box.tag_content }}>
+							{%- endif -%}
+						{%- endif -%}
+					{%- endblock -%}
+
+				{%- endblock -%}
+
+			{%- if box.render_skeleton -%}
+				</{{ box.tag_box }}>
+			{%- endif -%}
+		{%- endif -%}
+	{%- endblock -%}
+
+{%- endwith -%}
+{%- endblock -%}

@@ -1,0 +1,11 @@
+{
+    "name": "vyvrhel/twig-elements",
+    "description": "Twig boilerplates",
+    "authors": [
+        {
+            "name": "Martin Bulín",
+            "email": "martin.bulin@gmail.com",
+            "homepage": "https://www.vyvrhel.net",
+        },
+    ]
+}

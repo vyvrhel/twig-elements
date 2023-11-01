@@ -1,0 +1,392 @@
+{#-
+	*****************
+	Bootstrap 5 Modal
+	*****************
+
+	Skeleton for Bootstrap 5 Modal component (see https://getbootstrap.com/docs/5.3/components/modal/).
+	The modal behavior is controlled by the "modal" variable and its properties.
+
+	Structure:
+	----------
+	└── modal (modal wrapper)
+		└── dialog
+			└── content
+				└── header
+					└── title
+					└── close (button)
+				└── body
+				└── footer
+					└── confirm (button)
+
+	Properties:
+	-----------
+	└── Defining content:
+	- "title" (string) - Modal title (for a more complex value, extend the "modal_title" block {% block modal_title %}...{% endblock %}).
+	- "body" (string) - Modal body (for a more complex value, extend the "modal_body" block {% block modal_body %}...{% endblock %}).
+	- "close" (string) - Content/text of close button.
+	- "confirm" (string) - Content/text of confirm button.
+
+	└── Bootstrap Modal settings:
+	- "fade" (bool) - Use fade animation? (see https://getbootstrap.com/docs/5.3/components/modal/#remove-animation)
+	- "backdrop" (null|'static') - Backdrop behavior (see https://getbootstrap.com/docs/5.3/components/modal/#static-backdrop)
+	- "scrollable" (bool) - Use scrolling? (see https://getbootstrap.com/docs/5.3/components/modal/#scrolling-long-content)
+	- "centered" (bool) - Use vertical centering? (see https://getbootstrap.com/docs/5.3/components/modal/#vertically-centered)
+
+	└── Skeleton settings:
+	- "require_body" (bool) - If true and the modal body is empty, the modal will not be rendered.
+	- "render_confirm" (bool) - Render confirm button?
+
+	└── HTML code settings:
+	- "tag_title" (string) - HTML title wrapper tag.
+	- "tag_close" (string) - HTML close button tag.
+	- "tag_confirm" (string) - HTML confirm button tag.
+	- "bem_root" (string) - The modal wrapper is considered a BEM block, the rest of modal elements are considered BEM elements.
+		If "bem_root" is not empty, the modal wrapper is assigned the CSS class "[bem_root]",
+		the rest elemets "[bem_root]__[element_name]" ("element_name" - see "Structure" section).
+	- "[element_name]_[html_attribute]" (bool|string) - The given HTML attribute of the modal element (e.g. dialog_class).
+		If the attribute value:
+		- is "false|null", it will not be rendered,
+		- is "true", only attribute name will be rendered,
+		- contains twig output ("lorem-{{ foo }}"), it will be evaluated.
+	- "[element_name]_![html_attribute]" (bool|string) - Same as "[element_name]_[html_attribute]".
+		String values with and without "!" are not overwritten but concatenated.
+
+	Example:
+	--------
+
+		Twig (e.g. _confirm.html.twig):
+		----------------------------
+		{% extends '_modal_bootstrap_5.html.twig' %}
+
+		{% set modal = {
+			'title': 'Confirmation',
+			'body': 'Are you sure you want world peace?',
+			'confirm': 'Yes',
+			'bem_root': 'Confirm',
+			'render_confirm': true,
+			'modal_id': 'confirm-peace',
+		}|merge(modal ?? {}) %}
+
+		HTML result:
+		------------
+		<div class="Confirm modal fade" tabindex="-1" id="confirm-peace" aria-hidden aria-labelledby="confirm-peace-label">
+			<div class="Confirm__dialog modal-dialog">
+				<div class="Confirm__content modal-content">
+					<div class="Confirm__header modal-header">
+						<h5 class="Confirm__title modal-title" id="confirm-peace-label">
+							Confirmation
+						</h5>
+						<button
+							class="Confirm__close modal-close btn-close"
+							type="button"
+							data-bs-dismiss="modal"
+							aria-label="Close"
+						></button>
+					</div>
+					<div class="Confirm__body modal-body">
+						Are you sure you want world peace?
+					</div>
+					<div class="Confirm__footer modal-footer">
+						<button
+							class="Confirm__confirm modal-confirm btn btn-primary"
+							type="button"
+							data-bs-dismiss="modal"
+						>Yes</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		Possible uses/modifications of the Confirm component:
+		-----------------------------------------------------
+		{{ include(_confirm.html.twig) }}
+
+		{{ include(_confirm.html.twig, { 'modal': {
+			'body': 'Are you sure you want world war?',
+			'modal_class': 'Confirm--inverse',
+			'modal_id': 'confirm-war',
+		} }) }}
+-#}
+
+{%- set modal = {
+	'title': '',
+	'body': '',
+	'close': '',
+	'confirm': 'OK',
+
+	'fade': true,
+	'backdrop': null,
+	'scrollable': false,
+	'centered': false,
+
+	'require_body': true,
+	'render_confirm': false,
+
+	'tag_title': 'h5',
+	'tag_close': 'button',
+	'tag_confirm': 'button',
+	'bem_root': null,
+
+	'modal_tabindex': '-1',
+	'modal_aria-hidden': true,
+	'close_type': 'button',
+	'close_class': 'btn-close',
+	'close_data-bs-dismiss': 'modal',
+	'close_aria-label': 'Close',
+	'confirm_type': 'button',
+	'confirm_class': 'btn btn-primary',
+	'confirm_data-bs-dismiss': 'modal',
+}|merge(modal ?? {}) -%}
+
+{#- Wrap -#}
+{%- block modal_scope -%}
+
+	{#- = Bootstrap skeleton classes and BEM classes based on "bem_root" -#}
+	{%- for el in ['modal', 'dialog', 'content', 'header', 'title', 'close', 'body', 'footer', 'confirm'] -%}
+		{%- set modal = modal|merge({
+			(el ~ '_class'): (
+				(modal.bem_root ? ((modal.bem_root ~ (el != 'modal' ? '__' ~ el)) ~ ' '))
+				~ ('modal' ~ (el != 'modal' ? '-' ~ el)) ~ ' '
+				~ (modal[el ~ '_class'] ?? '')
+			)|trim,
+		}) -%}
+	{%- endfor -%}
+
+	{#- = Fade -#}
+	{%- if modal.fade -%}
+		{%- set modal = modal|merge({ 'modal_class': ((modal.modal_class ?? '') ~ ' fade')|trim }) -%}
+	{%- endif -%}
+
+	{#- = Scrollable -#}
+	{%- if modal.scrollable -%}
+		{%- set modal = modal|merge({ 'dialog_class': ((modal.dialog_class ?? '') ~ ' modal-dialog-scrollable')|trim }) -%}
+	{%- endif -%}
+
+	{#- = Vertically centered -#}
+	{%- if modal.centered -%}
+		{%- set modal = modal|merge({ 'dialog_class': ((modal.dialog_class ?? '') ~ ' modal-dialog-centered')|trim }) -%}
+	{%- endif -%}
+
+	{#- = Backdrop -#}
+	{%- if modal.backdrop -%}
+		{%- set modal = modal|merge({ 'modal_data-bs-backdrop': modal.backdrop }) -%}
+	{%- endif -%}
+
+	{#- = Default aria attributes based on modal ID -#}
+	{%- if modal.modal_id ?? null -%}
+		{%- if (modal.title_id ?? '') is empty -%}
+			{%- set modal = modal|merge({ 'title_id': modal.modal_id ~ '-label' }) -%}
+		{%- endif -%}
+		{%- if (modal['modal_aria-labelledby'] ?? '') is empty -%}
+			{%- set modal = modal|merge({ 'modal_aria-labelledby': modal.modal_id ~ '-label' }) -%}
+		{%- endif -%}
+	{%- endif -%}
+
+	{#- Modal wrap -#}
+	{%- block modal_outer -%}
+		{%- set _has_title = modal.title|trim or (block('modal_title') is defined and block('modal_title')|trim is not empty) -%}
+		{%- set _has_body = modal.body|trim or (block('modal_body') is defined and block('modal_body')|trim is not empty) -%}
+		{%- set _has_footer = block('modal_footer') is defined and block('modal_footer')|trim is not empty -%}
+		{%- if (_has_body or not modal.require_body) -%}
+			<div
+
+				{#- Attributes -#}
+				{%- block modal_attrs -%}
+					{%- set attr_source = attr_source ?? modal -%}
+					{%- set attr_prefix = attr_prefix ?? 'modal_' -%}
+
+					{#- = Get and concat "core" and "normal" HTML attributes -#}
+					{%- set attrs = {} -%}
+					{%- for attr, val in attr_source -%}
+						{%- if
+							attr starts with attr_prefix
+							and val is not same as(false)
+							and val is not same as(null)
+						-%}
+							{%- set attr = attr[attr_prefix|length:] -%}
+							{%- set is_core = attr starts with '!' -%}
+							{%- set attr = attr|trim('!', 'left') -%}
+							{%- set attrs = attrs|merge({
+								(attr): val is iterable
+									? ((is_core ? val) ~ ' ' ~ (attrs[attr] ?? '') ~ ' ' ~ (not is_core ? val))|trim
+									: val,
+							}) -%}
+						{%- endif -%}
+					{%- endfor -%}
+
+					{#- Render attributes -#}
+					{%- for attr, val in attrs -%}
+
+						{#- Attribute -#}
+						{%- block modal_attr -%}
+							{{- ' ' ~ attr }}
+							{%- if val is not same as(true) -%}
+								="
+
+								{#- Attribute value -#}
+								{%- block modal_attr_val ('{{' in val ? include(template_from_string(val)) : val)|e('html_attr') -%}
+
+								"
+							{%- endif -%}
+						{%- endblock -%}
+
+					{%- endfor -%}
+				{%- endblock -%}
+
+			>
+
+				{#- Modal -#}
+				{%- block modal -%}
+
+					{#- Dialog wrap -#}
+					{%- block modal_dialog_outer -%}
+						<div
+
+							{#- Attributes -#}
+							{%- with { 'attr_prefix': 'dialog_' } -%}
+								{{- block('modal_attrs') -}}
+							{%- endwith -%}
+
+						>
+
+							{#- Dialog -#}
+							{%- block modal_dialog -%}
+
+								{#- Content wrap -#}
+								{%- block modal_content_outer -%}
+									<div
+
+										{#- Attributes -#}
+										{%- with { 'attr_prefix': 'content_' } -%}
+											{{- block('modal_attrs') -}}
+										{%- endwith -%}
+
+									>
+
+										{#- Content -#}
+										{%- block modal_content -%}
+
+											{#- Header wrap -#}
+											{%- block modal_header_outer -%}
+												<div
+
+													{#- Attributes -#}
+													{%- with { 'attr_prefix': 'header_' } -%}
+														{{- block('modal_attrs') -}}
+													{%- endwith -%}
+
+												>
+
+													{#- Title wrap -#}
+													{%- block modal_title_outer -%}
+														{%- if _has_title -%}
+															<{{ modal.tag_title -}}
+
+																{#- Attributes -#}
+																{%- with { 'attr_prefix': 'title_' } -%}
+																	{{- block('modal_attrs') -}}
+																{%- endwith -%}
+
+															>
+
+																{#- Title -#}
+																{%- block modal_title modal.title|raw -%}
+
+															</{{ modal.tag_title }}>
+														{%- endif -%}
+													{%- endblock -%}
+
+													{#- Close wrap -#}
+													{%- block modal_close_outer -%}
+														<{{ modal.tag_close -}}
+
+															{#- Attributes -#}
+															{%- with { 'attr_prefix': 'close_' } -%}
+																{{- block('modal_attrs') -}}
+															{%- endwith -%}
+
+														>
+
+															{#- Close -#}
+															{%- block modal_close modal.close|raw -%}
+
+														</{{ modal.tag_close }}>
+													{%- endblock -%}
+
+												</div>
+											{%- endblock -%}
+
+											{#- Body wrap -#}
+											{%- block modal_body_outer -%}
+												<div
+
+													{#- Attributes -#}
+													{%- with { 'attr_prefix': 'body_' } -%}
+														{{- block('modal_attrs') -}}
+													{%- endwith -%}
+
+												>
+
+													{#- Body -#}
+													{%- block modal_body modal.body|raw -%}
+
+												</div>
+											{%- endblock -%}
+
+											{#- Footer wrap -#}
+											{%- block modal_footer_outer -%}
+												{%- if _has_footer -%}
+													<div
+
+														{#- Attributes -#}
+														{%- with { 'attr_prefix': 'footer_' } -%}
+															{{- block('modal_attrs') -}}
+														{%- endwith -%}
+
+													>
+
+														{#- Footer -#}
+														{%- block modal_footer -%}
+
+															{#- Confirm wrap -#}
+															{%- block modal_confirm_outer -%}
+																{%- if modal.render_confirm -%}
+																	<{{ modal.tag_confirm -}}
+
+																		{#- Attributes -#}
+																		{%- with { 'attr_prefix': 'confirm_' } -%}
+																			{{- block('modal_attrs') -}}
+																		{%- endwith -%}
+
+																	>
+
+																		{#- Conform -#}
+																		{%- block modal_confirm modal.confirm|raw -%}
+
+																	</{{ modal.tag_confirm }}>
+																{%- endif -%}
+															{%- endblock -%}
+
+														{%- endblock -%}
+
+													</div>
+												{%- endif -%}
+											{%- endblock -%}
+
+										{%- endblock -%}
+
+									</div>
+								{%- endblock -%}
+
+							{%- endblock -%}
+
+						</div>
+					{%- endblock -%}
+
+				{%- endblock -%}
+
+			</div>
+		{%- endif -%}
+	{%- endblock -%}
+
+{%- endblock -%}

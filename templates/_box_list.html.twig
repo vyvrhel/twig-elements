@@ -1,0 +1,210 @@
+{#-
+	*****************
+	Box list skeleton
+	*****************
+
+	Extends the Box skeleton (see _box.html.twig) and fills its contents with a list,
+	mostly rendered as <ul> + <li> tags.
+	The list behavior is controlled by the "list" variable and its properties.
+
+	Structure:
+	----------
+	└── box
+		└── title
+		└── content
+			└── list
+				└── li
+				└── li
+				└── ...
+			└── empty
+
+	Properties:
+	-----------
+	└── Defining content:
+	- "items" (iterable) - Items of this variable are rendered as separate list items.
+	- "item_var" (string) - Name of the variable under which the list item value will be available.
+	- "item_key_var" (string) - Name of the variable under which the list item key/index will be available.
+	- "li" (string) - Rendered value of list item. If the value contains twig output ("lorem-{{ foo }}"), it is evaluated.
+		For a more complex value, extend the "li" block {% block li %}...{% endblock %}.
+	- "empty" (string) - Rendered value of empty list info.
+		For a more complex value, extend the "list_empty" block {% block list_empty %}...{% endblock %}.
+
+	└── Skeleton settings:
+	- "require_items" (bool) - If true and "items" is empty, the list wrapper will not be rendered.
+	- "render_wrapper" (bool) - if false, list wrapper will not be rednered (only list items).
+	- "box_template" (string) - Path to "Box skeleton" template.
+
+	└── HTML code settings:
+	- "tag_list" (string) - HTML list wrapper tag.
+	- "tag_li" (string) - HTML list item wrapper tag.
+	- "tag_empty" (string) - HTML list empty info wrapper tag.
+	- "bem_list_suffix" (string) - (see "bem_root" in Box skeleton)
+	- "bem_li_suffix" (string) - (see "bem_root" in Box skeleton)
+	- "bem_empty_suffix" (string) - (see "bem_root" in Box skeleton)
+	- "[element_name]_[html_attribute]" (bool|string) - The given HTML attribute of the list element (list, li, empty) (e.g. list_class).
+		If the attribute value:
+		- is "false|null", it will not be rendered,
+		- is "true", only attribute name will be rendered,
+		- contains twig output ("lorem-{{ foo }}"), it will be evaluated.
+	- "[element_name]_![html_attribute]" (bool|string) - Same as "[element_name]_[html_attribute]".
+		String values with and without "!" are not overwritten but concatenated.
+
+	Example:
+	--------
+
+		Twig (e.g. _todo.html.twig):
+		----------------------------
+		{% extends '_box_list.html.twig' %}
+
+		{% set box = {
+			'bem_root': 'Todo',
+			'title': 'My todo list:',
+		}|merge(box ?? {}) %}
+
+		{% set list = {
+			'items': [
+				{ 'name': 'Get up' },
+				{ 'name': 'Enjoy the day', 'done': true },
+				{ 'name': 'Go to sleep' },
+			],
+		}|merge(list ?? {}) %}
+
+		{% block li %}
+			<input type="checkbox" class="{{ r }}__check {% if item.done ?? false %}checked{% endif %}>
+			<label class="{{ r }}__label">{{ item.name }}</label>
+		{% endblock %}
+
+		HTML result:
+		------------
+		<div class="Todo">
+			<h2 class="Todo__title">My todo list:</h2>
+			<div class="Todo__content">
+				<ul class="Todo__list">
+					<li class="Todo__li">
+						<input type="checkbox" class="Todo__check" checked>
+						<label class="Todo__label">Get up</label>
+					</li>
+					<li class="Todo__li">
+						<input type="checkbox" class="Todo__check" checked>
+						<label class="Todo__label">Enjoy the day</label>
+					</li>
+					<li class="Todo__li">
+						<input type="checkbox" class="Todo__check">
+						<label class="Todo__label">Go to sleep</label>
+					</li>
+				</ul>
+			/div>
+		</div>
+
+		Possible uses/modifications of the Todo component:
+		--------------------------------------------------
+		{{ include(_todo.html.twig, { 'list': { 'items': [
+			{ 'name': 'Nobody likes you' },
+			{ 'name': 'Everybody hates you' },
+			{ 'name': 'You're gonna lose' },
+		] } }) }}
+
+		{{ include(_todo.html.twig, { 'box': {
+			'bem_root': 'Todo-2',
+		} }) }}
+-#}
+
+{%- extends list.box_template -%}
+
+{%- set list = {
+	'items': {},
+	'item_var': 'item',
+	'item_key_var': 'key',
+	'li': '',
+	'empty': '',
+
+	'require_items': true,
+	'render_wrapper': true,
+	'box_template': '@TwigElements/_box.html.twig',
+
+	'tag_list': 'ul',
+	'tag_li': 'li',
+	'tag_empty': 'div',
+	'bem_list_suffix': '__list',
+	'bem_li_suffix': '__li',
+	'bem_empty_suffix': '__empty',
+}|merge(list ?? {}) -%}
+
+{#- Box content -#}
+{%- block box_content -%}
+
+	{#- = BEM classes based on "box.bem_xxx"/"list.bem_xxx" properties -#}
+	{%- if box.bem_root -%}
+		{%- set list = list|merge({
+			'list_class': ((box.bem_root ~ list.bem_list_suffix) ~ ' ' ~ (list.list_class ?? ''))|trim,
+			'li_class': ((box.bem_root ~ list.bem_li_suffix) ~ ' ' ~ (list.li_class ?? ''))|trim,
+			'empty_class': ((box.bem_root ~ list.bem_empty_suffix) ~ ' ' ~ (list.empty_class ?? ''))|trim,
+		}) -%}
+	{%- endif -%}
+
+	{#- List wrapper -#}
+	{%- block list_outer -%}
+		{%- if list.items|length or not list.require_items -%}
+			{%- if list.render_wrapper -%}
+				<{{ list.tag_list -}}
+
+					{#- Attributes -#}
+					{%- with { 'attr_source': list, 'attr_prefix': 'list_' } -%}
+						{{- block('box_attrs') -}}
+					{%- endwith -%}
+
+				>
+			{%- endif -%}
+
+				{#- List -#}
+				{%- block list -%}
+					{%- for _key, _item in list.items -%}
+					{%- with { (list.item_key_var): _key, (list.item_var): _item } -%}
+
+						{#- List item wrapper -#}
+						{%- block li_outer -%}
+							<{{ list.tag_li -}}
+
+								{#- Attributes -#}
+								{%- with { 'attr_source': list, 'attr_prefix': 'li_' } -%}
+									{{- block('box_attrs') -}}
+								{%- endwith -%}
+
+							>
+
+								{#- List item -#}
+								{%- block li ('{{' in list.li ? include(template_from_string(list.li)) : list.li)|raw -%}
+
+							</{{ list.tag_li }}>
+						{%- endblock -%}
+
+					{%- endwith -%}
+					{%- endfor -%}
+				{%- endblock -%}
+
+			{%- if list.render_wrapper -%}
+				</{{ list.tag_list }}>
+			{%- endif -%}
+		{%- endif -%}
+	{%- endblock -%}
+
+	{#- Empty info wrapper -#}
+	{%- block list_empty_outer -%}
+		{%- set _has_empty = list.empty|trim or (block('list_empty') is defined and block('list_empty')|trim is not empty) -%}
+		{%- if list.items|length == 0 and _has_empty -%}
+			<{{ list.tag_empty -}}
+
+				{#- Attributes -#}
+				{%- with { 'attr_source': list, 'attr_prefix': 'empty_' } -%}
+					{{- block('box_attrs') -}}
+				{%- endwith -%}
+			>
+
+				{#- Empty info -#}
+				{%- block list_empty list.empty|raw -%}
+
+			</{{ list.tag_empty }}>
+		{%- endif -%}
+	{%- endblock -%}
+
+{%- endblock -%}
