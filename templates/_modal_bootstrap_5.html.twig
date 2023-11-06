@@ -28,9 +28,11 @@
 
 	└── Bootstrap Modal settings:
 	- "fade" (bool) - Use fade animation? (see https://getbootstrap.com/docs/5.3/components/modal/#remove-animation)
-	- "backdrop" (null|'static') - Backdrop behavior (see https://getbootstrap.com/docs/5.3/components/modal/#static-backdrop)
 	- "scrollable" (bool) - Use scrolling? (see https://getbootstrap.com/docs/5.3/components/modal/#scrolling-long-content)
 	- "centered" (bool) - Use vertical centering? (see https://getbootstrap.com/docs/5.3/components/modal/#vertically-centered)
+	- "backdrop" (null|'static') - Backdrop behavior (see https://getbootstrap.com/docs/5.3/components/modal/#static-backdrop)
+	- "keybord" (bool) - Closes the modal when escape key is pressed (see https://getbootstrap.com/docs/5.3/components/modal/#options)
+	- "focus" (bool) - Puts the focus on the modal when initialized (see https://getbootstrap.com/docs/5.3/components/modal/#options)
 
 	└── Skeleton settings:
 	- "require_body" (bool) - If true and the modal body is empty, the modal will not be rendered.
@@ -115,9 +117,11 @@
 	'confirm': 'OK',
 
 	'fade': true,
-	'backdrop': null,
 	'scrollable': false,
 	'centered': false,
+	'backdrop': null,
+	'keybord': true,
+	'focus': true,
 
 	'require_body': true,
 	'render_confirm': false,
@@ -170,6 +174,16 @@
 	{#- = Backdrop -#}
 	{%- if modal.backdrop -%}
 		{%- set modal = modal|merge({ 'modal_data-bs-backdrop': modal.backdrop }) -%}
+	{%- endif -%}
+
+	{#- = Keybord -#}
+	{%- if not modal.keybord -%}
+		{%- set modal = modal|merge({ 'modal_data-bs-keybord': 'false' }) -%}
+	{%- endif -%}
+
+	{#- = Focus -#}
+	{%- if not modal.focus -%}
+		{%- set modal = modal|merge({ 'modal_data-bs-focus': 'false' }) -%}
 	{%- endif -%}
 
 	{#- = Default aria attributes based on modal ID -#}
