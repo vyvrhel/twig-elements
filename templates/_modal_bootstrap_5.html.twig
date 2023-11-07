@@ -51,7 +51,8 @@
 		- is "true", only attribute name will be rendered,
 		- contains twig output ("lorem-{{ foo }}"), it will be evaluated.
 	- "[element_name]_![html_attribute]" (bool|string) - Same as "[element_name]_[html_attribute]".
-		String values with and without "!" are not overwritten but concatenated.
+		String values prefixed with "!", suffixed with "!" and without "!" are not overwritten but concatenated.
+	- "[element_name]_[html_attribute]!" (bool|string) - (see "[element_name]_![html_attribute]")
 
 	Example:
 	--------
@@ -209,20 +210,20 @@
 					{%- set attr_source = attr_source ?? modal -%}
 					{%- set attr_prefix = attr_prefix ?? 'modal_' -%}
 
-					{#- = Get and concat "core" and "normal" HTML attributes -#}
+					{#- = Get and concat "prepend/append" and "normal" HTML attributes -#}
 					{%- set attrs = {} -%}
-					{%- for attr, val in attr_source -%}
+					{%- for attr, val in attr_source|sort -%}
 						{%- if
 							attr starts with attr_prefix
 							and val is not same as(false)
 							and val is not same as(null)
 						-%}
 							{%- set attr = attr[attr_prefix|length:] -%}
-							{%- set is_core = attr starts with '!' -%}
-							{%- set attr = attr|trim('!', 'left') -%}
+							{%- set is_prepend = attr starts with '!' -%}
+							{%- set attr = attr|trim('!') -%}
 							{%- set attrs = attrs|merge({
-								(attr): val is iterable
-									? ((is_core ? val) ~ ' ' ~ (attrs[attr] ?? '') ~ ' ' ~ (not is_core ? val))|trim
+								(attr): val is not iterable
+									? ((is_prepend ? val) ~ ' ' ~ (attrs[attr] ?? '') ~ ' ' ~ (not is_prepend ? val))|trim
 									: val,
 							}) -%}
 						{%- endif -%}
