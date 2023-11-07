@@ -221,7 +221,7 @@
 							{%- set is_core = attr starts with '!' -%}
 							{%- set attr = attr|trim('!', 'left') -%}
 							{%- set attrs = attrs|merge({
-								(attr): val is iterable
+								(attr): val is not iterable and val is not same as(true))
 									? ((is_core ? val) ~ ' ' ~ (attrs[attr] ?? '') ~ ' ' ~ (not is_core ? val))|trim
 									: val,
 							}) -%}
