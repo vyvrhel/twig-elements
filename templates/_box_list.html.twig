@@ -47,7 +47,8 @@
 		- is "true", only attribute name will be rendered,
 		- contains twig output ("lorem-{{ foo }}"), it will be evaluated.
 	- "[element_name]_![html_attribute]" (bool|string) - Same as "[element_name]_[html_attribute]".
-		String values with and without "!" are not overwritten but concatenated.
+		String values prefixed with "!", suffixed with "!" and without "!" are not overwritten but concatenated.
+	- "[element_name]_[html_attribute]!" (bool|string) - (see "[element_name]_![html_attribute]")
 
 	Example:
 	--------
