@@ -131,7 +131,8 @@
 
 						{#- = Get and concat "prepend/append" and "normal" HTML attributes -#}
 						{%- set attrs = {} -%}
-						{%- for attr, val in attr_source|sort -%}
+						{%- for attr in attr_source|keys|sort -%}
+							{%- set val = attr_source[attr] -%}
 							{%- if
 								attr starts with attr_prefix
 								and val is not same as(false)
