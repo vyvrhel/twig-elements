@@ -1,0 +1,155 @@
+{#-
+	***************
+	HTML 5 Document
+	***************
+-#}
+
+{%- set doc = {
+	'title': '',
+	'body': '',
+	'charset': 'UTF-8',
+
+	'bem_root': null,
+	'bem_root_var': 'R',
+	'bem_body_suffix': '__body',
+
+	'html_lang': 'en',
+}|merge(doc ?? {}) -%}
+
+{#- Wrap -#}
+{%- block doc_scope -%}
+{%- with { (doc.bem_root_var): doc.bem_root } -%} {#- = Shortcut for "doc.bem_root" -#}
+
+	{#- = BEM classes based on "bem_xxx" properties -#}
+	{%- if doc.bem_root -%}
+		{%- set doc = doc|merge({
+			'html_class': (doc.bem_root ~ ' ' ~ (doc.html_class ?? ''))|trim,
+			'body_class': ((doc.bem_root ~ doc.bem_body_suffix) ~ ' ' ~ (doc.body_class ?? ''))|trim,
+		}) -%}
+	{%- endif -%}
+
+	{#- Doctype -#}
+	{%- block doc_type -%}
+		<!DOCTYPE html>
+	{%- endblock -%}
+
+	{#- Html wrap -#}
+	{%- block doc_outer -%}
+		<html
+
+			{#- Attributes -#}
+			{%- block doc_attrs -%}
+				{%- set attr_source = attr_source ?? doc -%}
+				{%- set attr_prefix = attr_prefix ?? 'html_' -%}
+
+				{#- = Get and concat "prepend/append" and "normal" HTML attributes -#}
+				{%- set attrs = {} -%}
+				{%- for attr, val in attr_source|sort -%}
+					{%- if
+						attr starts with attr_prefix
+						and val is not same as(false)
+						and val is not same as(null)
+					-%}
+						{%- set attr = attr[attr_prefix|length:] -%}
+						{%- set is_prepend = attr starts with '!' -%}
+						{%- set attr = attr|trim('!') -%}
+						{%- set attrs = attrs|merge({
+							(attr): (val is not iterable and val is not same as(true))
+								? ((is_prepend ? val) ~ ' ' ~ (attrs[attr] ?? '') ~ ' ' ~ (not is_prepend ? val))|trim
+								: val,
+						}) -%}
+					{%- endif -%}
+				{%- endfor -%}
+
+				{#- Render attributes -#}
+				{%- for attr, val in attrs -%}
+
+					{#- Attribute -#}
+					{%- block doc_attr -%}
+						{{- ' ' ~ attr }}
+						{%- if val is not same as(true) -%}
+							="
+
+							{#- Attribute value -#}
+							{%- block doc_attr_val ('{{' in val ? include(template_from_string(val)) : val)|e('html_attr') -%}
+
+							"
+						{%- endif -%}
+					{%- endblock -%}
+
+				{%- endfor -%}
+			{%- endblock -%}
+
+		>
+
+			{#- Html -#}
+			{%- block doc -%}
+
+				{#- Head wrap -#}
+				{%- block doc_head_outer -%}
+					<head>
+
+						{#- Head -#}
+						{%- block doc_head -%}
+
+							{#- Title outer -#}
+							{%- block doc_title_outer -%}
+								<title>
+
+									{#- Title -#}
+									{%- block doc_title doc.title|striptags|raw -%}
+
+								</title>
+							{%- endblock -%}
+
+							{#- Metas -#}
+							{%- block doc_meta -%}
+
+								{#- Charset -#}
+								{%- block doc_meta_charset -%}
+									<meta charset="{{ doc.charset }}">
+								{%- endblock -%}
+
+							{%- endblock -%}
+
+							{#- Preloads -#}
+							{%- block doc_preload '' -%}
+
+							{#- Stylesheets -#}
+							{%- block doc_stylesheets '' -%}
+
+							{#- Favicon -#}
+							{%- block doc_favicon '' -%}
+
+							{#- Scripts -#}
+							{%- block doc_scripts '' -%}
+
+						{%- endblock -%}
+
+					</head>
+				{%- endblock -%}
+
+				{#- Body wrap -#}
+				{%- block doc_body_outer -%}
+					<body
+
+						{#- Attributes -#}
+						{%- with { 'attr_prefix': 'body_' } -%}
+							{{- block('doc_attrs') -}}
+						{%- endwith -%}
+
+					>
+
+						{#- Body -#}
+						{%- block doc_body doc.body|raw -%}
+
+					</body>
+				{%- endblock -%}
+
+			{%- endblock -%}
+
+		</html>
+	{%- endblock -%}
+
+{%- endwith -%}
+{%- endblock -%}
