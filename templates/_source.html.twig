@@ -1,0 +1,118 @@
+{#-
+	**********
+	Source tag
+	**********
+-#}
+
+{%- set source = {
+	'auto_descriptors': [],
+
+	'html_attrs': ['id', 'src', 'srcset', 'sizes', 'class', 'title', 'is', 'width', 'height',
+		'data-.+', 'style', 'tabindex', 'hidden', 'media', 'type'],
+}|merge(source ?? {}) -%}
+
+{#- Wrap -#}
+{%- block source_scope -%}
+
+	{#- = Srcset autocompletion -#}
+	{%- if (source.srcset ?? null) is iterable and source.srcset|length == 1 -%}
+		{%- for d in source.auto_descriptors -%}
+			{%- set _src_parts = source.srcset|first|split('.') -%}
+			{%- set source = source|merge({
+				'srcset': source.srcset|merge({ (d): _src_parts[:-1]|join('.') ~ '@' ~ d ~ '.' ~ _src_parts|last })
+			}) -%}
+		{%- endfor -%}
+	{%- endif -%}
+
+	{#- = Type autocompletion -#}
+	{%- if not (source.type ?? null) -%}
+
+		{#- = Image extension -#}
+		{%- set _img_format = (source.srcset ?? null)|length
+			? (source.srcset is iterable ? source.srcset|first : source.srcset)|split('.')|last|split('?')|first|lower
+			: null
+		-%}
+
+		{#- = Type -#}
+		{%- if _img_format -%}
+			{%- set source = source|merge({ 'type': 'image/' ~ _img_format }) -%}
+		{%- endif -%}
+
+	{%- endif -%}
+
+	{#- Source wrap -#}
+	{%- block source_outer -%}
+		{%- if (source.src ?? null) or (source.srcset ?? null) -%}
+			<source
+
+				{#- Attributes -#}
+				{%- block source_attrs -%}
+
+					{#- = Get and concat "prepend/append" and "normal" HTML attributes -#}
+					{%- set attrs = {} -%}
+					{%- for attr in source|keys|sort -%}
+						{%- set val = source[attr] -%}
+						{%- if
+							attr matches '/^(\!?' ~ source.html_attrs|join('\!?|\!?') ~ '\!?)$/'
+							and val is not same as(false)
+							and val is not same as(null)
+						-%}
+							{%- set is_prepend = attr starts with '!' -%}
+							{%- set attr = attr|trim('!') -%}
+							{%- set attrs = attrs|merge({
+								(attr): (val is not iterable and val is not same as(true))
+									? ((is_prepend ? val) ~ ' ' ~ (attrs[attr] ?? '') ~ ' ' ~ (not is_prepend ? val))|trim
+									: val,
+							}) -%}
+						{%- endif -%}
+					{%- endfor -%}
+
+					{#- Render attributes -#}
+					{%- for attr, val in attrs -%}
+
+						{#- = Srcset - object to string conversion -#}
+						{%- if attr == 'srcset' and val is iterable -%}
+							{%- set _new_val = '' -%}
+							{%- for d, src in val -%}
+								{%- set _new_val -%}
+									{{- _new_val -}}, {% with { 'val': src } %}{{ block('source_attr_src') }}{% endwith %}{% if d %} {{ d }}{% endif -%}
+								{%- endset -%}
+							{%- endfor -%}
+							{%- set val = _new_val|trim(',')|trim -%}
+						{%- endif -%}
+
+						{#- Attribute -#}
+						{%- block source_attr -%}
+							{{- ' ' ~ attr }}
+							{%- if val is not same as(true) -%}
+								="
+								{%- autoescape 'html_attr' -%}
+
+									{#- Attribute value -#}
+									{%- block source_attr_val -%}
+										{%- if attr == 'src' -%}
+
+											{#- Src attribute value (own block for easier src post processing) -#}
+											{%- block source_attr_src val -%}
+
+										{%- else -%}
+
+											{#- Other attribute value -#}
+											{%- block source_attr_other val -%}
+
+										{%- endif -%}
+									{%- endblock -%}
+
+								{%- endautoescape -%}
+								"
+							{%- endif -%}
+						{%- endblock -%}
+
+					{%- endfor -%}
+				{%- endblock -%}
+
+			>
+		{%- endif -%}
+	{%- endblock -%}
+
+{%- endblock -%}

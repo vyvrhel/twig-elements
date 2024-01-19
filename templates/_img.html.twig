@@ -1,0 +1,123 @@
+{#-
+	*******
+	Img tag
+	*******
+-#}
+
+{%- set img = {
+	'require_source': true,
+	'placeholder': false,
+	'placeholder_src': null,
+	'auto_descriptors': [],
+
+	'bem_root': null,
+	'bem_suffix': '__img',
+	'bem_modifiers': [],
+	'html_attrs': ['id', 'src', 'srcset', 'sizes', 'class', 'alt', 'title', 'is', 'loading', 'width', 'height',
+		'data-.+', 'longdesc', 'ismap', 'usemap', 'style', 'tabindex', 'hidden'],
+}|merge(img ?? {}) -%}
+
+{#- Wrap -#}
+{%- block img_scope -%}
+
+	{#- = BEM class based on "bem_root", "bem_suffix" and "bem_modifiers" -#}
+	{%- if img.bem_root and img.bem_suffix -%}
+		{%- for modifier in img.bem_modifiers is iterable ? img.bem_modifiers : [ img.bem_modifiers ] -%}
+			{%- set img = img|merge({ 'class': (img.bem_root ~ img.bem_suffix ~ '--' ~ modifier ~ ' ' ~ (img.class ?? ''))|trim }) -%}
+		{%- endfor -%}
+		{%- set img = img|merge({ 'class': (img.bem_root ~ img.bem_suffix ~ ' ' ~ (img.class ?? ''))|trim }) -%}
+	{%- endif -%}
+
+	{#- = Placeholder for empty source -#}
+	{%- if not (img.src ?? null) and img.placeholder and img.placeholder_src -%}
+		{%- set img = img|merge({ 'src': img.placeholder_src }) -%}
+	{%- endif -%}
+
+	{#- = Srcset autocompletion -#}
+	{%- if (img.src ?? null) and not (img.srcset ?? null)  -%}
+		{%- for d in img.auto_descriptors -%}
+			{%- set _src_parts = img.src|split('.') -%}
+			{%- set img = img|merge({
+				'srcset': (img.srcset ?? {})|merge({
+					(d): _src_parts[:-1]|join('.') ~ '@' ~ d ~ '.' ~ _src_parts|last,
+				})
+			}) -%}
+		{%- endfor -%}
+	{%- endif -%}
+
+	{#- Img wrap -#}
+	{%- block img_outer -%}
+		{%- if ((img.src ?? null) or not img.require_source) -%}
+			<img
+
+				{#- Attributes -#}
+				{%- block img_attrs -%}
+
+					{#- = Get and concat "prepend/append" and "normal" HTML attributes -#}
+					{%- set attrs = {} -%}
+					{%- for attr in img|keys|sort -%}
+						{%- set val = img[attr] -%}
+						{%- if
+							attr matches '/^(\!?' ~ img.html_attrs|join('\!?|\!?') ~ '\!?)$/'
+							and val is not same as(false)
+							and val is not same as(null)
+						-%}
+							{%- set is_prepend = attr starts with '!' -%}
+							{%- set attr = attr|trim('!') -%}
+							{%- set attrs = attrs|merge({
+								(attr): (val is not iterable and val is not same as(true))
+									? ((is_prepend ? val) ~ ' ' ~ (attrs[attr] ?? '') ~ ' ' ~ (not is_prepend ? val))|trim
+									: val,
+							}) -%}
+						{%- endif -%}
+					{%- endfor -%}
+
+					{#- Render attributes -#}
+					{%- for attr, val in attrs -%}
+
+						{#- = Srcset - object to string conversion -#}
+						{%- if attr == 'srcset' and val is iterable -%}
+							{%- set _new_val = '' -%}
+							{%- for d, src in val -%}
+								{%- set _new_val -%}
+									{{- _new_val -}}, {% with { 'val': src } %}{{ block('img_attr_src') }}{% endwith %}{% if d %} {{ d }}{% endif -%}
+								{%- endset -%}
+							{%- endfor -%}
+							{%- set val = _new_val|trim(',')|trim -%}
+						{%- endif -%}
+
+						{#- Attribute -#}
+						{%- block img_attr -%}
+							{{- ' ' ~ attr }}
+							{%- if val is not same as(true) -%}
+								="
+								{%- autoescape 'html_attr' -%}
+
+									{#- Attribute value -#}
+									{%- block img_attr_val -%}
+										{%- if attr == 'src' -%}
+
+											{#- Src attribute value (own block for easier src post processing) -#}
+											{%- block img_attr_src val -%}
+
+										{%- else -%}
+
+											{#- Other attribute value -#}
+											{%- block img_attr_other val -%}
+
+										{%- endif -%}
+									{%- endblock -%}
+
+								{%- endautoescape -%}
+								"
+							{%- endif -%}
+						{%- endblock -%}
+
+					{%- endfor -%}
+				{%- endblock -%}
+
+			>
+		{%- endif -%}
+	{%- endblock -%}
+
+{%- endblock -%}

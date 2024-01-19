@@ -1,0 +1,164 @@
+{#-
+	***********
+	Picture tag
+	***********
+-#}
+
+{%- set picture = {
+	'img': null,
+	'sources': [],
+
+	'require_img': true,
+	'auto_formats': [],
+	'auto_descriptors': [],
+
+	'bem_root': null,
+	'bem_suffix': '__picture',
+	'bem_modifiers': [],
+	'html_attrs': ['id', 'class', 'title', 'is', 'data-.+', 'style', 'tabindex', 'hidden'],
+	'tag_empty': 'div',
+
+	'img_template': '@TwigElements/_img.html.twig',
+	'source_template': '@TwigElements/_source.html.twig',
+}|merge(picture ?? {}) -%}
+
+{#- Wrap -#}
+{%- block picture_scope -%}
+
+	{#- = BEM class based on "bem_xxx" properties -#}
+	{%- if picture.bem_root and picture.bem_suffix -%}
+		{%- for modifier in picture.bem_modifiers is iterable ? picture.bem_modifiers : [ picture.bem_modifiers ] -%}
+			{%- set picture = picture|merge({ 'class': (picture.bem_root ~ picture.bem_suffix ~ '--' ~ modifier ~ ' ' ~ (picture.class ?? ''))|trim }) -%}
+		{%- endfor -%}
+		{%- set picture = picture|merge({ 'class': (picture.bem_root ~ picture.bem_suffix ~ ' ' ~ (picture.class ?? ''))|trim }) -%}
+	{%- endif -%}
+
+	{#- = Img auto descriptors inheritance -#}
+	{%- if not picture.img.auto_descriptors ?? null -%}
+		{%- set picture = picture|merge({ 'img': picture.img|merge({ 'auto_descriptors': picture.auto_descriptors }) }) -%}
+	{%- endif -%}
+
+	{#- = Img code -#}
+	{%- set _img_html = include(picture.img_template, { 'img': picture.img }) -%}
+
+	{#- Picture wrap -#}
+	{%- block picture_wrap -%}
+		{%- if _img_html|trim or not picture.require_img -%}
+			<{% block picture_tag _img_html|trim ? 'picture' : picture.tag_empty -%}
+
+				{#- Attributes -#}
+				{%- block picture_attrs -%}
+
+					{#- = Get and concat "prepend/append" and "normal" HTML attributes -#}
+					{%- set attrs = {} -%}
+					{%- for attr in picture|keys|sort -%}
+						{%- set val = picture[attr] -%}
+						{%- if
+							attr matches '/^(\!?' ~ picture.html_attrs|join('\!?|\!?') ~ '\!?)$/'
+							and val is not same as(false)
+							and val is not same as(null)
+						-%}
+							{%- set is_prepend = attr starts with '!' -%}
+							{%- set attr = attr|trim('!') -%}
+							{%- set attrs = attrs|merge({
+								(attr): (val is not iterable and val is not same as(true))
+									? ((is_prepend ? val) ~ ' ' ~ (attrs[attr] ?? '') ~ ' ' ~ (not is_prepend ? val))|trim
+									: val,
+							}) -%}
+						{%- endif -%}
+					{%- endfor -%}
+
+					{#- Render attributes -#}
+					{%- for attr, val in attrs -%}
+
+						{#- Attribute -#}
+						{%- block picture_attr -%}
+							{{- ' ' ~ attr }}
+							{%- if val is not same as(true) -%}
+								="
+
+								{#- Attribute value -#}
+								{%- block picture_attr_val val|e('html_attr') -%}
+
+								"
+							{%- endif -%}
+						{%- endblock -%}
+
+					{%- endfor -%}
+				{%- endblock -%}
+
+			>
+
+				{#- Sources -#}
+				{%- block picture_sources -%}
+					{%- for source in picture.sources -%}
+
+						{#- Source outer -#}
+						{%- block picture_source_outer -%}
+
+							{#- = Source auto descriptors inheritance -#}
+							{%- if not source.auto_descriptors ?? null -%}
+								{%- set source = source|merge({ 'auto_descriptors': picture.auto_descriptors }) -%}
+							{%- endif -%}
+
+							{#- Source auto formats outer -#}
+							{%- block picture_source_auto_formats_outer -%}
+								{%- if (source.srcset ?? null) is iterable and (picture.auto_formats ?? [])|length -%}
+
+									{#- Source auto formats -#}
+									{%- block picture_source_auto_formats -%}
+										{%- for _format in picture.auto_formats -%}
+
+											{#- = Srcset extension replace -#}
+											{%- for _d, _src in source.srcset -%}
+												{%- set source = source|merge({ 'srcset': source.srcset|merge({
+													(_d): _src|replace({ ('.' ~ source.srcset|first|split('.')|last|split('?')|first): '.' ~ _format }),
+												}) }) -%}
+											{%- endfor -%}
+
+											{#- Source auto format -#}
+											{%- block picture_source_auto_format block('picture_source') -%}
+
+										{%- endfor -%}
+									{%- endblock -%}
+
+								{%- endif -%}
+							{%- endblock -%}
+
+							{#- Source -#}
+							{%- block picture_source include(picture.source_template) -%}
+
+						{%- endblock -%}
+
+					{%- endfor -%}
+				{%- endblock -%}
+
+				{#- Img auto formats outer -#}
+				{%- block picture_img_auto_formats_outer -%}
+					{%- if (picture.img.src ?? '')|length and (picture.auto_formats ?? [])|length -%}
+
+						{#- = Source (from img) -#}
+						{%- set source = {
+							'auto_descriptors': picture.img.auto_descriptors ?? null,
+							'srcset': { '': picture.img.src }|merge((picture.img.srcset ?? null) is iterable ? picture.img.srcset : {}),
+						} -%}
+
+						{#- Img auto formats -#}
+						{%- block picture_img_auto_formats block('picture_source_auto_formats_outer') -%}
+
+					{%- endif -%}
+				{%- endblock -%}
+
+				{#- Img outer -#}
+				{%- block picture_img_outer -%}
+
+					{#- Img -#}
+					{%- block picture_img _img_html|raw -%}
+
+				{%- endblock -%}
+
+			</{{ block('picture_tag') }}>
+		{%- endif -%}
+	{%- endblock -%}
+
+{%- endblock -%}
