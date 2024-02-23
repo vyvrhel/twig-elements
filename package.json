@@ -1,0 +1,23 @@
+{
+	"name": "@vyvrhel/twig-elements",
+	"version": "0.3.0",
+	"description": "Twig boilerplates",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/vyvrhel/twig-elements.git"
+	},
+	"files": ["templates/**/*"],
+	"keywords": [
+		"twig",
+		"twing",
+		"boilerplates",
+		"elements",
+		"components"
+	],
+	"author": "Martin Bulín (https://www.vyvrhel.net)",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/vyvrhel/twig-elements/issues"
+	},
+	"homepage": "https://github.com/vyvrhel/twig-elements#readme"
+}
