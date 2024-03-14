@@ -1,12 +1,14 @@
 {
 	"name": "@vyvrhel/twig-elements",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"description": "Twig boilerplates",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/vyvrhel/twig-elements.git"
 	},
-	"files": ["templates/**/*"],
+	"files": [
+		"templates/**/*"
+	],
 	"keywords": [
 		"twig",
 		"twing",
