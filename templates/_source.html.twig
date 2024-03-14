@@ -86,7 +86,7 @@
 							{{- ' ' ~ attr }}
 							{%- if val is not same as(true) -%}
 								="
-								{%- autoescape 'html_attr' -%}
+								{%- autoescape 'html' -%}
 
 									{#- Attribute value -#}
 									{%- block source_attr_val -%}

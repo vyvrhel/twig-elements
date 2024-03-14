@@ -71,7 +71,7 @@
 							="
 
 							{#- Attribute value -#}
-							{%- block doc_attr_val ('{{' in val ? include(template_from_string(val)) : val)|e('html_attr') -%}
+							{%- block doc_attr_val ('{{' in val ? include(template_from_string(val)) : val)|e('html') -%}
 
 							"
 						{%- endif -%}

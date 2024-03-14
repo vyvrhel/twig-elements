@@ -91,7 +91,7 @@
 							{{- ' ' ~ attr }}
 							{%- if val is not same as(true) -%}
 								="
-								{%- autoescape 'html_attr' -%}
+								{%- autoescape 'html' -%}
 
 									{#- Attribute value -#}
 									{%- block img_attr_val -%}
