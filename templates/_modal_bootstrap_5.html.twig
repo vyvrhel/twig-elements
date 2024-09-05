@@ -21,8 +21,9 @@
 	Properties:
 	-----------
 	└── Defining content:
-	- "title" (string) - Modal title (for a more complex value, extend the "modal_title" block {% block modal_title %}...{% endblock %}).
-	- "body" (string) - Modal body (for a more complex value, extend the "modal_body" block {% block modal_body %}...{% endblock %}).
+	- "title" (string) - Modal title (for a more complex value, define the "modal_title" block {% block modal_title %}...{% endblock %}).
+	- "body" (string) - Modal body (for a more complex value, define the "modal_body" block {% block modal_body %}...{% endblock %}).
+	- "footer" (string) - Modal footer (for a more complex value, define the "modal_footer" block {% block modal_footer %}...{% endblock %}).
 	- "close" (string) - Content/text of close button.
 	- "confirm" (string) - Content/text of confirm button.
 
@@ -114,6 +115,7 @@
 {%- set modal = {
 	'title': '',
 	'body': '',
+	'footer': '',
 	'close': '',
 	'confirm': 'OK',
 
@@ -197,11 +199,18 @@
 		{%- endif -%}
 	{%- endif -%}
 
+	{#- = Store contents of blocks in variables (for the possibility to test their emptiness without duplicate rendering) -#}
+	{%- set modal = modal|merge({
+		'title': block('modal_title') is defined ? block('modal_title') : modal.title,
+		'body': block('modal_body') is defined ? block('modal_body') : modal.body,
+		'footer': block('modal_footer') is defined ? block('modal_footer') : modal.footer,
+	}) -%}
+
 	{#- Modal wrap -#}
 	{%- block modal_outer -%}
-		{%- set _has_title = modal.title|trim or (block('modal_title') is defined and block('modal_title')|trim is not empty) -%}
-		{%- set _has_body = modal.body|trim or (block('modal_body') is defined and block('modal_body')|trim is not empty) -%}
-		{%- set _has_footer = block('modal_footer') is defined and block('modal_footer')|trim is not empty -%}
+		{%- set _has_title = modal.title|trim -%}
+		{%- set _has_body = modal.body|trim -%}
+		{%- set _has_footer = modal.footer|trim -%}
 		{%- if (_has_body or not modal.require_body) -%}
 			<div
 
@@ -306,7 +315,7 @@
 															>
 
 																{#- Title -#}
-																{%- block modal_title modal.title|raw -%}
+																{%- block modal_title_output modal.title|raw -%}
 
 															</{{ modal.tag_title }}>
 														{%- endif -%}
@@ -344,14 +353,14 @@
 												>
 
 													{#- Body -#}
-													{%- block modal_body modal.body|raw -%}
+													{%- block modal_body_output modal.body|raw -%}
 
 												</div>
 											{%- endblock -%}
 
 											{#- Footer wrap -#}
 											{%- block modal_footer_outer -%}
-												{%- if _has_footer -%}
+												{%- if _has_footer or modal.render_confirm -%}
 													<div
 
 														{#- Attributes -#}
@@ -360,9 +369,14 @@
 														{%- endwith -%}
 
 													>
+														{#- User defined footer -#}
+														{%- if _has_footer -%}
 
-														{#- Footer -#}
-														{%- block modal_footer -%}
+															{#- Footer -#}
+															{%- block modal_footer_output modal.footer|raw -%}
+
+														{#- Default footer -#}
+														{%- else -%}
 
 															{#- Confirm wrap -#}
 															{%- block modal_confirm_outer -%}
@@ -376,15 +390,14 @@
 
 																	>
 
-																		{#- Conform -#}
+																		{#- Confirm -#}
 																		{%- block modal_confirm modal.confirm|raw -%}
 
 																	</{{ modal.tag_confirm }}>
 																{%- endif -%}
 															{%- endblock -%}
 
-														{%- endblock -%}
-
+														{%- endif -%}
 													</div>
 												{%- endif -%}
 											{%- endblock -%}

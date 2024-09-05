@@ -17,8 +17,8 @@
 	Properties:
 	-----------
 	└── Defining content:
-	- "title" (string) - Box title (for a more complex value, extend the "box_title" block {% block box_title %}...{% endblock %}).
-	- "content" (string) - Box content (for a more complex value, extend the "box_content" block {% block box_content %}...{% endblock %}).
+	- "title" (string) - Box title (for a more complex value, define the "box_title" block {% block box_title %}...{% endblock %}).
+	- "content" (string) - Box content (for a more complex value, define the "box_content" block {% block box_content %}...{% endblock %}).
 
 	└── Skeleton settings:
 	- "require_content" (bool) - If true and the box content is empty, the box will not be rendered (even though it has a title).
@@ -116,10 +116,16 @@
 		}) -%}
 	{%- endif -%}
 
+	{#- = Store contents of blocks in variables (for the possibility to test their emptiness without duplicate rendering) -#}
+	{%- set box = box|merge({
+		'title': block('box_title') is defined ? block('box_title') : box.title,
+		'content': block('box_content') is defined ? block('box_content') : box.content,
+	}) -%}
+
 	{#- Box wrap -#}
 	{%- block box_outer -%}
-		{%- set _has_title = box.title|trim or (block('box_title') is defined and block('box_title')|trim is not empty) -%}
-		{%- set _has_content = box.content|trim or (block('box_content') is defined and block('box_content')|trim is not empty) -%}
+		{%- set _has_title = box.title|trim -%}
+		{%- set _has_content = box.content|trim -%}
 		{%- if (_has_content or not box.require_content) and (_has_title or _has_content) -%}
 			{%- if box.render_skeleton -%}
 				<{{ box.tag_box -}}
@@ -187,7 +193,7 @@
 							>
 
 								{#- Title -#}
-								{%- block box_title box.title|raw -%}
+								{%- block box_title_output box.title|raw -%}
 
 							</{{ box.tag_title }}>
 						{%- endif -%}
@@ -208,7 +214,7 @@
 							{%- endif -%}
 
 							{#- Content -#}
-							{%- block box_content box.content|raw -%}
+							{%- block box_content_output box.content|raw -%}
 
 							{%- if box.render_skeleton -%}
 								</{{ box.tag_content }}>

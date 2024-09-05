@@ -27,7 +27,7 @@
 	- "li" (string) - Rendered value of list item. If the value contains twig output ("lorem-{{ foo }}"), it is evaluated.
 		For a more complex value, extend the "li" block {% block li %}...{% endblock %}.
 	- "empty" (string) - Rendered value of empty list info.
-		For a more complex value, extend the "list_empty" block {% block list_empty %}...{% endblock %}.
+		For a more complex value, define the "list_empty" block {% block list_empty %}...{% endblock %}.
 
 	└── Skeleton settings:
 	- "require_items" (bool) - If true and "items" is empty, the list wrapper will not be rendered.
@@ -143,6 +143,11 @@
 		}) -%}
 	{%- endif -%}
 
+	{#- = Store contents of blocks in variables (for the possibility to test their emptiness without duplicate rendering) -#}
+	{%- set list = list|merge({
+		'empty': block('list_empty') is defined ? block('list_empty') : list.empty,
+	}) -%}
+
 	{#- List wrapper -#}
 	{%- block list_outer -%}
 		{%- if list.items|length or not list.require_items -%}
@@ -191,7 +196,7 @@
 
 	{#- Empty info wrapper -#}
 	{%- block list_empty_outer -%}
-		{%- set _has_empty = list.empty|trim or (block('list_empty') is defined and block('list_empty')|trim is not empty) -%}
+		{%- set _has_empty = list.empty|trim -%}
 		{%- if list.items|length == 0 and _has_empty -%}
 			<{{ list.tag_empty -}}
 
@@ -202,7 +207,7 @@
 			>
 
 				{#- Empty info -#}
-				{%- block list_empty list.empty|raw -%}
+				{%- block list_empty_output list.empty|raw -%}
 
 			</{{ list.tag_empty }}>
 		{%- endif -%}
