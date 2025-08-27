@@ -2,24 +2,145 @@
 	***********
 	Picture tag
 	***********
+
+	An extendable HTML skeleton for a <picture> element with support for
+	multiple <source> elements, BEM modifiers, automatic format switching
+	(WebP, AVIF, etc.), and descriptor inheritance.
+
+	Provides a high-level wrapper around <img> and <source> templates,
+	allowing reusable responsive images with declarative configuration.
+
+	Structure:
+	----------
+	└── picture
+		├── source(s)
+		└── img (fallback)
+
+	Properties:
+	-----------
+	└── Content:
+	- "img" (array|null) - Definition for the fallback <img> element
+		(included via "img_template").
+	- "sources" (array) - List of <source> definitions
+		(included via "source_template").
+	- "require_img" (bool) - If true and no <img> is rendered,
+		<picture> will not be output.
+
+	└── Auto features:
+	- "auto_formats" (array) - List of formats (e.g. ["webp", "avif"])
+		automatically generated from base sources/img.
+	- "auto_descriptors" (array) - List of descriptors (e.g. ["2x", "480w"])
+		inherited by both sources and img when missing.
+
+	└── BEM settings:
+	- "bem_root" (string) - Base BEM block name.
+	- "bem_suffix" (string) - Default element suffix (e.g. "__picture").
+	- "bem_modifiers" (array|string) - Modifiers appended to BEM class.
+		Classes follow "[bem_root][bem_suffix][--modifier]".
+
+	└── HTML attribute handling:
+	- "html_attrs" (array) - Whitelisted HTML attributes to render.
+	- Attribute rendering rules:
+		- attr = value → renders `attr="value"`.
+		- attr = true → renders `attr`.
+		- attr = false|null → not rendered.
+		- prefixed with "!" → concatenates instead of overriding.
+
+	└── Templates:
+	- "img_template" - Path to the Twig template for <img>.
+	- "source_template" - Path to the Twig template for <source>.
+	- "tag_empty" - Fallback wrapper tag (default: "div")
+		used when no <picture> should be rendered.
+
+	Example:
+	--------
+
+		Twig:
+		-----
+		{% extends '_picture.html.twig' %}
+
+		{% set picture = {
+			'bem_root': 'Card',
+			'img': {
+				'src': 'image.jpg',
+				'width': 1024,
+				'height': 480,
+				'alt': 'Alternative text',
+				'loading': 'lazy',
+			},
+			'auto_formats': [ 'avif', 'webp' ],
+			'auto_descriptors': [ '2x', '3x' ],
+			'sources': [
+				{
+					'srcset': { '': 'image_600.jpg' },
+					'width': 600,
+					'height': 900,
+					'media': '(max-width: 600px)',
+				},
+			],
+		}|merge(picture ?? {}) %}
+
+		HTML result:
+		------------
+		<picture class="Card__picture">
+			<source
+				srcset="image_600.avif, image_600@2x.avif 2x, image_600@3x.avif 3x"
+				width="600"
+				height="900"
+				media="(max-width: 600px)"
+				type="image/avif"
+			>
+			<source
+				srcset="image_600.webp, image_600@2x.webp 2x, image_600@3x.webp 3x"
+				width="600"
+				height="900"
+				media="(max-width: 600px)"
+				type="image/webp"
+			>
+			<source
+				srcset="image_600.jpg, image_600@2x.jpg 2x, image_600@3x.jpg 3x"
+				width="600"
+				height="900"
+				media="(max-width: 600px)"
+				type="image/jpeg"
+			>
+			<source
+				srcset="image.avif, image@2x.avif 2x, image@3x.avif 3x"
+				type="image/avif"
+			>
+			<source
+				srcset="image.webp, image@2x.webp 2x, image@3x.webp 3x"
+				type="image/webp"
+			>
+			<img
+				src="image.jpg"
+				srcset="image.jpg, image@2x.jpg 2x, image@3x.jpg 3x"
+				class="Card__img"
+				width="1024"
+				height="480"
+				alt="Alternative text"
+				loading="lazy"
+			>
+		</picture>
 -#}
 
 {%- set picture = {
 	'img': null,
 	'sources': [],
-
 	'require_img': true,
+
 	'auto_formats': [],
 	'auto_descriptors': [],
 
 	'bem_root': null,
 	'bem_suffix': '__picture',
 	'bem_modifiers': [],
+
 	'html_attrs': ['id', 'class', 'title', 'is', 'data-.+', 'style', 'tabindex', 'hidden'],
-	'tag_empty': 'div',
 
 	'img_template': '@TwigElements/_img.html.twig',
 	'source_template': '@TwigElements/_source.html.twig',
+	'tag_empty': 'div',
 }|merge(picture ?? {}) -%}
 
 {#- Wrap -#}

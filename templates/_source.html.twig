@@ -2,6 +2,60 @@
 	**********
 	Source tag
 	**********
+
+	An extendable HTML skeleton for a single <source> element inside a <picture> block.
+	Supports automatic srcset generation, MIME type detection, and selective HTML attribute rendering.
+
+	HTML attributes:
+	----------------
+	All attributes of the <source> tag are assigned via properties of the `source` object.
+	For example, `source.srcset`, `source.type`, `source.media`, etc.
+
+	Properties:
+	-----------
+	└── Source handling:
+	- "srcset" (string|array) - Srcset definitions. Can be specified in two forms:
+		- Plain string: `"photo@2x.jpg 2x, photo@3x.jpg 3x"`
+		- Array of objects with descriptor keys: `{ "": { "photo.jpg" }, "2x": { "photo@2x.jpg" }, "3x": { "photo@3x.jpg" } }`
+	- "auto_descriptors" (array) - List of descriptors (e.g. "2x", "480w") for automatic srcset generation.
+		When defined and `source.srcset` is missing, descriptors will be appended to the base filename.
+	- "media" (string) - Media query for the source element.
+	- "type" (string) - MIME type of the image. If not provided, automatically derived from the file extension via "types" mapping.
+
+	└── HTML attribute handling:
+	- "html_attrs" (array) - Whitelisted HTML attributes to render.
+	- Attribute rendering rules:
+		- attr = value → renders `attr="value"`.
+		- attr = true → renders `attr`.
+		- attr = false|null → not rendered.
+		- prefixed with "!" → concatenates instead of overriding.
+
+	└── MIME type mapping:
+	- "types" (object) - Maps extensions to MIME types.
+	- Fallback: 'image/<extension>' if no mapping exists.
+
+	Example:
+	--------
+
+		Twig:
+		-----
+		{% set source = {
+			'srcset': { '': 'image_600.jpg' },
+			'width': 600,
+			'height': 900,
+			'media': '(max-width: 600px)',
+			'auto_descriptors': ['2x', '3x'],
+		}|merge(source ?? {}) %}
+
+		HTML result:
+		------------
+		<source
+			srcset="image_600.jpg, image_600@2x.jpg 2x, image_600@3x.jpg 3x"
+			width="600"
+			height="900"
+			media="(max-width: 600px)"
+			type="image/jpeg"
+		>
 -#}
 
 {%- set source = {
@@ -9,6 +63,7 @@
 
 	'html_attrs': ['id', 'src', 'srcset', 'sizes', 'class', 'title', 'is', 'width', 'height',
 		'data-.+', 'style', 'tabindex', 'hidden', 'media', 'type'],
+
 	'types': { 'jpg': 'image/jpeg', 'jpe': 'image/jpeg', 'svg': 'image/svg+xml', 'ico': 'image/x-icon', 'tif': 'image/tiff' },
 }|merge(source ?? {}) -%}
 

@@ -2,6 +2,68 @@
 	***************
 	HTML 5 Document
 	***************
+
+	An extendable HTML skeleton for a full HTML5 document, including <html>, <head>, and <body> elements.
+	Supports BEM-based class generation, customizable attributes, and easy insertion of meta, title, scripts, and styles.
+
+	Structure:
+	----------
+	└── html
+		└── body
+
+	HTML attributes:
+	----------------
+	All attributes of the <html> and <body> tags are assigned via properties of the `doc` object.
+	For example, `doc.html_lang`, `doc.body_class`, `doc.html_data_foo`, etc.
+
+	Properties:
+	-----------
+	└── Document metadata:
+	- "title" (string) - Page title, rendered inside <title> tag, accessed as `doc.title`.
+	- "charset" (string) - Document charset, default "UTF-8", rendered as `<meta charset="{{ doc.charset }}">`.
+	- "body" (string) - Content of the <body> (for a more complex value, define the "doc_body" block {% block doc_body %}...{% endblock %}).
+
+	└── BEM settings:
+	- "bem_root" (string) - Base BEM block name for the document wrapper.
+	- "bem_root_var" (string) - Shortcut variable name for `bem_root` inside template (default "R").
+	- "bem_body_suffix" (string) - Suffix for body BEM class (default "__body").
+
+	└── HTML attribute handling:
+	- "html_attrs" and "body_attrs" (via `doc` properties) - Any additional attributes can be passed in the `doc` object.
+	- Attribute rendering rules:
+		- attr = value → renders `attr="value"`.
+		- attr = true → renders `attr`.
+		- attr = false|null → not rendered.
+		- prefixed with "!" → concatenates instead of overriding.
+
+	Example:
+	--------
+
+		Twig:
+		-----
+		{% extends '_doc.html.twig' %}
+
+		{% set doc = {
+			'title': 'My Page',
+			'bem_root': 'Page',
+			'html_id': 'page',
+			'body': '<h1>Welcome</h1><p>Hello world!</p>',
+			'body_id': 'page-body',
+		}|merge(doc ?? {}) %}
+
+		HTML result:
+		------------
+		<!DOCTYPE html>
+		<html lang="en" class="Page" id="page">
+			<head>
+				<title>My Page</title>
+				<meta charset="UTF-8">
+			</head>
+			<body class="Page__body" id="page-body">
+				<h1>Welcome</h1>
+				<p>Hello world!</p>
+			</body>
+		</html>
 -#}
 
 {%- set doc = {

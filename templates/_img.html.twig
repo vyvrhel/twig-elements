@@ -2,6 +2,68 @@
 	*******
 	Img tag
 	*******
+
+	An extendable HTML skeleton for an <img> element with support for BEM modifiers,
+	automatic srcset generation, and placeholder handling.
+	Designed for easy extension/inclusion of image components,
+	attribute customization, and consistent BEM-based styling.
+
+	HTML attributes:
+	----------------
+	All attributes of the <img> tag are assigned via properties of the `img` object.
+	For example, `img.src`, `img.width`, `img.loading`, etc.
+
+	Properties:
+	-----------
+	└── Source handling:
+	- "src" (string) - Image source URL.
+	- "srcset" (string|array) - Optional srcset definitions. Can be specified in two forms:
+		- Plain string: `"photo@2x.jpg 2x, photo@3x.jpg 3x"`
+		- Array of objects with descriptor keys: `{ "": { "photo.jpg" }, "2x": { "photo@2x.jpg" }, "3x": { "photo@3x.jpg" } }`
+	  If `img.srcset` is missing and `img.auto_descriptors` is defined, additional srcset entries are generated automatically.
+	- "require_source" (bool) - If true and `img.src` is not defined, the <img> will not be rendered.
+	- "placeholder" (bool) - If true, `img.placeholder_src` will be used when `img.src` is empty.
+	- "placeholder_src" (string) - Placeholder image URL.
+	- "auto_descriptors" (array) - List of descriptors (e.g. "2x", "480w") for automatic srcset generation.
+		When defined and `img.srcset` is missing, descriptors will be appended to the base filename.
+
+	└── BEM settings:
+	- "bem_root" (string) - Base BEM block name.
+	- "bem_suffix" (string) - Default element suffix (e.g. "__img").
+	- "bem_modifiers" (array|string) - BEM modifiers (e.g. "--large"), appended to the BEM class.
+		Final classes follow the pattern "[bem_root][bem_suffix][--modifier]".
+
+	└── HTML attribute handling:
+	- "html_attrs" (array) - Whitelisted HTML attributes to render.
+	- Attribute rendering rules:
+		- attr = value → renders `attr="value"`.
+		- attr = true → renders `attr`.
+		- attr = false|null → not rendered.
+		- prefixed with "!" → concatenates instead of overriding.
+
+	Example:
+	--------
+
+		Twig:
+		-----
+		{% extends '_img.html.twig' %}
+
+		{% set img = {
+			'bem_root': 'Card',
+			'bem_modifiers': ['large'],
+			'src': 'photo.jpg',
+			'alt': 'Card photo',
+			'auto_descriptors': ['2x', '3x'],
+		}|merge(img ?? {}) %}
+
+		HTML result:
+		------------
+		<img
+			class="Card__img Card__img--large"
+			src="photo.jpg"
+			srcset="photo@2x.jpg 2x, photo@3x.jpg 3x"
+			alt="Card photo"
+		>
 -#}
 
 {%- set img = {
@@ -13,6 +75,7 @@
 	'bem_root': null,
 	'bem_suffix': '__img',
 	'bem_modifiers': [],
+
 	'html_attrs': ['id', 'src', 'srcset', 'sizes', 'class', 'alt', 'title', 'is', 'loading', 'width', 'height',
 		'data-.+', 'longdesc', 'ismap', 'usemap', 'style', 'tabindex', 'hidden'],
 }|merge(img ?? {}) -%}
