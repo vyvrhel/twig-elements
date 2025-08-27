@@ -34,7 +34,7 @@
 	{%- endif -%}
 
 	{#- = Img auto descriptors inheritance -#}
-	{%- if not picture.img.auto_descriptors ?? null -%}
+	{%- if picture.img and not picture.img.auto_descriptors ?? null -%}
 		{%- set picture = picture|merge({ 'img': picture.img|merge({ 'auto_descriptors': picture.auto_descriptors }) }) -%}
 	{%- endif -%}
 
@@ -44,7 +44,7 @@
 	{#- Picture wrap -#}
 	{%- block picture_wrap -%}
 		{%- if _img_html|trim or not picture.require_img -%}
-			<{% block picture_tag _img_html|trim ? 'picture' : picture.tag_empty -%}
+			<{% block picture_tag (_img_html|trim or picture.sources|length) ? 'picture' : picture.tag_empty -%}
 
 				{#- Attributes -#}
 				{%- block picture_attrs -%}
