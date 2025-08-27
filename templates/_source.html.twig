@@ -9,6 +9,7 @@
 
 	'html_attrs': ['id', 'src', 'srcset', 'sizes', 'class', 'title', 'is', 'width', 'height',
 		'data-.+', 'style', 'tabindex', 'hidden', 'media', 'type'],
+	'types': { 'jpg': 'image/jpeg', 'jpe': 'image/jpeg', 'svg': 'image/svg+xml', 'ico': 'image/x-icon', 'tif': 'image/tiff' },
 }|merge(source ?? {}) -%}
 
 {#- Wrap -#}
@@ -35,7 +36,7 @@
 
 		{#- = Type -#}
 		{%- if _img_format -%}
-			{%- set source = source|merge({ 'type': 'image/' ~ _img_format }) -%}
+			{%- set source = source|merge({ 'type': source.types[_img_format] ?? ('image/' ~ _img_format) }) -%}
 		{%- endif -%}
 
 	{%- endif -%}
