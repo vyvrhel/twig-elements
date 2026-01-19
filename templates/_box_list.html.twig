@@ -32,6 +32,7 @@
 	└── Skeleton settings:
 	- "require_items" (bool) - If true and "items" is empty, the list wrapper will not be rendered.
 	- "render_wrapper" (bool) - if false, list wrapper will not be rednered (only list items).
+	- "filter_null_items" (bool) - If true, null items will be removed from "items" before rendering.
 	- "box_template" (string) - Path to "Box skeleton" template.
 
 	└── HTML code settings:
@@ -121,6 +122,7 @@
 
 	'require_items': true,
 	'render_wrapper': true,
+	'filter_null_items': false,
 	'box_template': '@TwigElements/_box.html.twig',
 
 	'tag_list': 'ul',
@@ -141,6 +143,17 @@
 			'li_class': ((box.bem_root ~ list.bem_li_suffix) ~ ' ' ~ (list.li_class ?? ''))|trim,
 			'empty_class': ((box.bem_root ~ list.bem_empty_suffix) ~ ' ' ~ (list.empty_class ?? ''))|trim,
 		}) -%}
+	{%- endif -%}
+
+	{#- = Filter null items if requested -#}
+	{%- if list.filter_null_items -%}
+		{%- set _filtered_items = {} -%}
+		{%- for _key, _item in list.items -%}
+			{%- if _item is not same as(null) -%}
+				{%- set _filtered_items = _filtered_items|merge({ (_key): _item }) -%}
+			{%- endif -%}
+		{%- endfor -%}
+		{%- set list = list|merge({ 'items': _filtered_items }) -%}
 	{%- endif -%}
 
 	{#- = Store contents of blocks in variables (for the possibility to test their emptiness without duplicate rendering) -#}
