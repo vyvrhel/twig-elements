@@ -155,7 +155,7 @@
 	{%- endif -%}
 
 	{#- = Img auto descriptors inheritance -#}
-	{%- if picture.img and not picture.img.auto_descriptors ?? null -%}
+	{%- if picture.img and not (picture.img.auto_descriptors ?? null) -%}
 		{%- set picture = picture|merge({ 'img': picture.img|merge({ 'auto_descriptors': picture.auto_descriptors }) }) -%}
 	{%- endif -%}
 
@@ -218,7 +218,7 @@
 						{%- block picture_source_outer -%}
 
 							{#- = Source auto descriptors inheritance -#}
-							{%- if not source.auto_descriptors ?? null -%}
+							{%- if not (source.auto_descriptors ?? null) -%}
 								{%- set source = source|merge({ 'auto_descriptors': picture.auto_descriptors }) -%}
 							{%- endif -%}
 
