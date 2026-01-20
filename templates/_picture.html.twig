@@ -175,7 +175,7 @@
 					{%- for attr in picture|keys|sort -%}
 						{%- set val = picture[attr] -%}
 						{%- if
-							attr matches '/^(\!?' ~ picture.html_attrs|join('\!?|\!?') ~ '\!?)$/'
+							attr matches '/^(!?' ~ picture.html_attrs|join('!?|!?') ~ '!?)$/'
 							and val is not same as(false)
 							and val is not same as(null)
 						-%}

@@ -121,7 +121,7 @@
 					{%- for attr in img|keys|sort -%}
 						{%- set val = img[attr] -%}
 						{%- if
-							attr matches '/^(\!?' ~ img.html_attrs|join('\!?|\!?') ~ '\!?)$/'
+							attr matches '/^(!?' ~ img.html_attrs|join('!?|!?') ~ '!?)$/'
 							and val is not same as(false)
 							and val is not same as(null)
 						-%}

@@ -109,7 +109,7 @@
 					{%- for attr in source|keys|sort -%}
 						{%- set val = source[attr] -%}
 						{%- if
-							attr matches '/^(\!?' ~ source.html_attrs|join('\!?|\!?') ~ '\!?)$/'
+							attr matches '/^(!?' ~ source.html_attrs|join('!?|!?') ~ '!?)$/'
 							and val is not same as(false)
 							and val is not same as(null)
 						-%}
