@@ -23,6 +23,9 @@
 	└── Skeleton settings:
 	- "require_content" (bool) - If true and the box content is empty, the box will not be rendered (even though it has a title).
 	- "render_skeleton" (bool) - if true, renders only box content (no title and no HTML wrappers).
+	- "eval_attrs" (array) - Names of HTML attributes (without element prefix, e.g. "class", "data-id") whose values
+		are evaluated as twig, if they contain twig output ("lorem-{{ foo }}"). Applies to all box elements (box, title, content).
+		Never use it for attributes whose values may come from an untrusted source (risk of template injection).
 
 	└── HTML code settings:
 	- "tag_box" (string) - HTML box wrapper tag.
@@ -40,7 +43,7 @@
 		If the attribute value:
 		- is "false|null", it will not be rendered,
 		- is "true", only attribute name will be rendered,
-		- contains twig output ("lorem-{{ foo }}"), it will be evaluated.
+		- contains twig output ("lorem-{{ foo }}") and the attribute is listed in "eval_attrs", it will be evaluated.
 	- "[element_name]_![html_attribute]" (bool|string) - Same as "[element_name]_[html_attribute]".
 		String values prefixed with "!", suffixed with "!" and without "!" are not overwritten but concatenated.
 	- "[element_name]_[html_attribute]!" (bool|string) - (see "[element_name]_![html_attribute]")
@@ -93,6 +96,7 @@
 
 	'require_content': true,
 	'render_skeleton': true,
+	'eval_attrs': [],
 
 	'tag_box': 'div',
 	'tag_title': 'h2',
@@ -134,6 +138,7 @@
 					{%- block box_attrs -%}
 						{%- set attr_source = attr_source ?? box -%}
 						{%- set attr_prefix = attr_prefix ?? 'box_' -%}
+						{%- set eval_attrs = attr_source.eval_attrs ?? [] -%}
 
 						{#- = Get and concat "prepend/append" and "normal" HTML attributes -#}
 						{%- set attrs = {} -%}
@@ -165,7 +170,7 @@
 									="
 
 									{#- Attribute value -#}
-									{%- block box_attr_val ('{{' in val ? include(template_from_string(val)) : val)|e('html') -%}
+									{%- block box_attr_val (((attr in eval_attrs) and '{{' in val) ? include(template_from_string(val)) : val)|e('html') -%}
 
 									"
 								{%- endif -%}

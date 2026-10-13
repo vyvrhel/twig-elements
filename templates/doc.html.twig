@@ -35,6 +35,10 @@
 		- attr = true → renders `attr`.
 		- attr = false|null → not rendered.
 		- prefixed with "!" → concatenates instead of overriding.
+		- contains twig output ("lorem-{{ foo }}") and the attribute is listed in "eval_attrs" → it is evaluated.
+	- "eval_attrs" (array) - Names of HTML attributes (without element prefix, e.g. "class", "data-id") whose values
+		are evaluated as twig, if they contain twig output ("lorem-{{ foo }}"). Applies to all document elements (html, body).
+		Never use it for attributes whose values may come from an untrusted source (risk of template injection).
 
 	Example:
 	--------
@@ -75,6 +79,8 @@
 	'bem_root_var': 'R',
 	'bem_body_suffix': '__body',
 
+	'eval_attrs': [],
+
 	'html_lang': 'en',
 }|merge(doc ?? {}) -%}
 
@@ -103,6 +109,7 @@
 			{%- block doc_attrs -%}
 				{%- set attr_source = attr_source ?? doc -%}
 				{%- set attr_prefix = attr_prefix ?? 'html_' -%}
+				{%- set eval_attrs = attr_source.eval_attrs ?? [] -%}
 
 				{#- = Get and concat "prepend/append" and "normal" HTML attributes -#}
 				{%- set attrs = {} -%}
@@ -133,7 +140,7 @@
 							="
 
 							{#- Attribute value -#}
-							{%- block doc_attr_val ('{{' in val ? include(template_from_string(val)) : val)|e('html') -%}
+							{%- block doc_attr_val (((attr in eval_attrs) and '{{' in val) ? include(template_from_string(val)) : val)|e('html') -%}
 
 							"
 						{%- endif -%}

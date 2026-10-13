@@ -24,7 +24,8 @@
 	- "items" (iterable) - Items of this variable are rendered as separate list items.
 	- "item_var" (string) - Name of the variable under which the list item value will be available.
 	- "item_key_var" (string) - Name of the variable under which the list item key/index will be available.
-	- "li" (string) - Rendered value of list item. If the value contains twig output ("lorem-{{ foo }}"), it is evaluated.
+	- "li" (string) - Rendered value of list item (not escaped).
+		If the value contains twig output ("lorem-{{ foo }}") and "eval_li" is true, it is evaluated.
 		For a more complex value, extend the "li" block {% block li %}...{% endblock %}.
 	- "empty" (string) - Rendered value of empty list info.
 		For a more complex value, define the "list_empty" block {% block list_empty %}...{% endblock %}.
@@ -34,6 +35,12 @@
 	- "render_wrapper" (bool) - if false, list wrapper will not be rednered (only list items).
 	- "filter_null_items" (bool) - If true, null items will be removed from "items" before rendering.
 	- "box_template" (string) - Path to "Box skeleton" template.
+	- "eval_attrs" (array) - Names of HTML attributes (without element prefix, e.g. "class", "data-id") whose values
+		are evaluated as twig, if they contain twig output ("lorem-{{ foo }}"). Applies to all list elements (list, li, empty).
+		Note: it must be set on "list" ("list.eval_attrs"), "box.eval_attrs" applies only to box elements (box, title, content).
+		Never use it for attributes whose values may come from an untrusted source (risk of template injection).
+	- "eval_li" (bool) - If true, "li" value is evaluated as twig, if it contains twig output ("lorem-{{ foo }}").
+		Never use it if "li" value may come from an untrusted source (risk of template injection).
 
 	└── HTML code settings:
 	- "tag_list" (string) - HTML list wrapper tag.
@@ -46,7 +53,7 @@
 		If the attribute value:
 		- is "false|null", it will not be rendered,
 		- is "true", only attribute name will be rendered,
-		- contains twig output ("lorem-{{ foo }}"), it will be evaluated.
+		- contains twig output ("lorem-{{ foo }}") and the attribute is listed in "list.eval_attrs", it will be evaluated.
 	- "[element_name]_![html_attribute]" (bool|string) - Same as "[element_name]_[html_attribute]".
 		String values prefixed with "!", suffixed with "!" and without "!" are not overwritten but concatenated.
 	- "[element_name]_[html_attribute]!" (bool|string) - (see "[element_name]_![html_attribute]")
@@ -124,6 +131,8 @@
 	'render_wrapper': true,
 	'filter_null_items': false,
 	'box_template': '@TwigElements/_box.html.twig',
+	'eval_attrs': [],
+	'eval_li': false,
 
 	'tag_list': 'ul',
 	'tag_li': 'li',
@@ -192,7 +201,7 @@
 							>
 
 								{#- List item -#}
-								{%- block li ('{{' in list.li ? include(template_from_string(list.li)) : list.li)|raw -%}
+								{%- block li ((list.eval_li and '{{' in list.li) ? include(template_from_string(list.li)) : list.li)|raw -%}
 
 							</{{ list.tag_li }}>
 						{%- endblock -%}
